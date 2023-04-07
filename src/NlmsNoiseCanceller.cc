@@ -87,14 +87,14 @@ LmsNoiseCanceller::~LmsNoiseCanceller(void)
 
 /*****************************************************************************
 
-  Name: resetFilterState
+  Name: shiftSampleInPipeline
 
-  Purpose: The purpose of this function is to reset the filter state to its
-  initial values.  This includes setting the ring buffer index to the
-  beginning of the filter state memory and setting all entries of the
-  filter state memory to a value of 0.
+  Purpose: The purpose of this function is to shift the next sample into
+  the filter state memory (the pipeline).  For now, a linear buffer will
+  be used.  This was chosen because the pipeline is used in the update
+  equation for the the filter coefficients.
 
-  Calling Sequence: resetFilterState()
+  Calling Sequence: shiftSampleInPipeline(float x)
 
   Inputs:
 
@@ -105,22 +105,22 @@ LmsNoiseCanceller::~LmsNoiseCanceller(void)
     None.
 
 *****************************************************************************/
-void LmsNoiseCanceller::resetFilterState(void)
+void LmsNoiseCanceller::shiftSampleInPipeline(float x)
 {
   int i;
 
-  // Set to the beginning of filter state memory.
-  ringBufferIndex = 0;
-
-  // Clear the filter state.
-  for (i = 0; i < filterLength; i++)
+  // Shift the existing samples.
+  for (i = 2; i < filterLength; i++)
   {
-    filterStatePtr[i] = 0;
+    filterStatePtr[i] = filterStatePtr[i-1];
   } // for
+
+  // Place the sample into the pipeline.
+  filterStatePtr[0] = x;
 
   return;
 
-} // resetFilterState
+} // shiftSampleInPipeline
 
 /*****************************************************************************
 
