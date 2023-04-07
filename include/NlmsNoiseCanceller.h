@@ -12,6 +12,8 @@
 
 #include <stdint.h>
 
+#include "FirFilter.h"
+
 class NlmsNoiseCanceller
 {
   //***************************** operations **************************
@@ -53,6 +55,9 @@ class NlmsNoiseCanceller
 
   // Pointer to the filter state (previous samples).
   float *filterStatePtr;
+
+  // This filter is used as a delay line.
+  FirFilter *delayLinePtr;
 };
 
 #endif // __NLMSNOISECANCELLER__
