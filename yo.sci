@@ -90,20 +90,11 @@ function dhat = knlms_noiseCanceller(x,n0,Beta,nord,w0)
   // Force a row vector without altering the values.
   w0 = w0(:).';
 
-  // Grab the first pipeline state.
-  pipeline = X(1,:);
+  // Grab the first filterState state.
+  filterState = X(1,:);
 
-  //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
   // Compute the first output value.
-  //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-   // Initialize the running sum.
-   dhat(1) = 0;
-
-  // Compute dhat = w0 * pipeline'.
-  for j = 1:N
-    dhat(1) = dhat(1) + w0(j) * pipeline(j);
-  end
-  //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+  dhat(1) = dotProduct(w0,filterState,N);
 
   // Compute the first iteration for the error.
   E = d(1) - dhat(1); 
@@ -112,69 +103,78 @@ function dhat = knlms_noiseCanceller(x,n0,Beta,nord,w0)
   // Constructthe normalizing denominator for the first
   // iteration.
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-  // Initialize the running sum.
-  DEN = 0;
-
-  // Compute DEN = pipeline * pipeline' + 0.0001.
-  for j = 1:N
-    DEN = DEN + pipeline(j) * pipeline(j) + 0.0001;
-  end
-  DEN = DEN + 0.0001;
-  //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+  DEN = dotProduct(filterState,filterState,N) + 0.0001;
 
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
   // Perform the first iteration for the filter vector.
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-  // Compute W = w0 + (Beta / DEN) * E * conj(pipeline);
+  // Compute W = w0 + (Beta / DEN) * E * conj(filterState);
   for j = 1:N
-    W(j) = w0(j) + (Beta / DEN) * E(1) * conj(pipeline(j));
+    W(j) = w0(j) + (Beta / DEN) * E(1) * conj(filterState(j));
   end
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
   if M > 1
     for k = 2:M - nord + 1
 
-      // Grab the next pipeline state.
-      pipeline = X(k,:);
+      // Grab the next filterState state.
+      filterState = X(k,:);
 
-      //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
       // Compute the next output.
-      //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-       // Initialize the running sum.
-       dhat(k) = 0;
-
-      // Compute dhat = W * pipeline'.
-      for j = 1:N
-        dhat(k) = dhat(k) + W(j) * pipeline(j);
-      end
-      //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+      dhat(k) = dotProduct(W,filterState,N);
  
       // Compute the next error.
       E = d(k) - dhat(k);
 
       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
       // Update the normalizing denominator.
-       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-     // Initialize the running sum.
-      DEN = 0;
-
-      // Compute DEN = pipeline * pipeline' + 0.0001.
-      for j = 1:N
-        DEN = DEN + pipeline(j) * pipeline(j) + 0.0001;
-      end
-      DEN = DEN + 0.0001;
       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
+      DEN = dotProduct(filterState,filterState,N) + 0.0001;
 
       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
       // Update the filter vector.
       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-      // Compute W = W + (Beta / DEN) * E * conj(pipeline);
+      // Compute W = W + (Beta / DEN) * E * conj(filterState);
       for j = 1:N
-        W(j) = W(j) + (Beta / DEN) * E * conj(pipeline(j));
+        W(j) = W(j) + (Beta / DEN) * E * conj(filterState(j));
       end
       //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
     end
+  end
+
+endfunction
+
+//**********************************************************************
+//
+//  Name: dotProduct
+//
+//  The purpose of this function is to compute the dot product of
+//  two vectors.
+//
+//  Calling Sequence: c = dotProduct(a,b,N)
+//
+//  Inputs:
+//
+//    a - The first vector for which the dot product is to be computed.
+//
+//    b - The second vector for which the dot product is to be computed.
+//
+//    N - The length of the two input vectors.
+//
+//  Outputs:
+//
+//    c - The dot product of a and b.
+//
+//**********************************************************************
+function c = dotProduct(a,b,N)
+
+  // Initialize running sum.
+  c = 0;
+
+  // Compute the dot product product.
+  for j = 1:N
+    c = c + a(j) * b(j);
   end
 
 endfunction
@@ -199,8 +199,8 @@ Beta = 0.1;
 //fd = mopen('f162425.raw')
 fd = mopen('f1354.raw')
 //x = mget(323584,'s',fd);
-x = mget(10000,'s',fd);
-mclose(fd);
+x = mget(100000,'s',fd);
+//mclose(fd);
 
 dhat = knlms_noiseCanceller(x,n5,Beta,p5);
 //dhat = knlms_noiseCanceller(x,n5,Beta,p10);
@@ -210,10 +210,4 @@ dhat = knlms_noiseCanceller(x,n5,Beta,p5);
 fd = mopen('kdhat1354.raw','w');
 mput(dhat,'s',fd);
 mclose(fd);
-
-
-////_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-// Plot results.
-//_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
 
