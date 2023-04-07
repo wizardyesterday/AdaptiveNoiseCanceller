@@ -1,22 +1,22 @@
 //************************************************************************
-// file name: FirFilter.cc
+// file name: LmsNoiseCanceller.cc
 //************************************************************************
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "FirFilter.h"
+#include "LmsNoiseCanceller.h"
 
 using namespace std;
 
 /*****************************************************************************
 
-  Name: FirFilter
+  Name: LmsNoiseCanceller
 
   Purpose: The purpose of this function is to serve as the constructor for
-  an instance of an FirFilter.
+  an instance of an LmsNoiseCanceller.
 
-  Calling Sequence: FirFilter(filterLength,coefficientsPtr)
+  Calling Sequence: LmsNoiseCanceller(filterLength,coefficientsPtr)
 
   Inputs:
 
@@ -29,7 +29,7 @@ using namespace std;
     None.
 
 *****************************************************************************/
-FirFilter::FirFilter(int filterLength,
+LmsNoiseCanceller::LmsNoiseCanceller(int filterLength,
                      float *coefficientsPtr)
 {
   int i;
@@ -54,16 +54,16 @@ FirFilter::FirFilter(int filterLength,
 
   return;
 
-} // FirFilter
+} // LmsNoiseCanceller
 
 /*****************************************************************************
 
-  Name: ~FirFilter
+  Name: ~LmsNoiseCanceller
 
   Purpose: The purpose of this function is to serve as the destructor for
-  an instance of an FirFilter.
+  an instance of an LmsNoiseCanceller.
 
-  Calling Sequence: ~FirFilter()
+  Calling Sequence: ~LmsNoiseCanceller()
 
   Inputs:
 
@@ -74,7 +74,7 @@ FirFilter::FirFilter(int filterLength,
     None.
 
 *****************************************************************************/
-FirFilter::~FirFilter(void)
+LmsNoiseCanceller::~LmsNoiseCanceller(void)
 {
 
   // Release resources.
@@ -83,7 +83,7 @@ FirFilter::~FirFilter(void)
 
   return;
 
-} // ~FirFilter
+} // ~LmsNoiseCanceller
 
 /*****************************************************************************
 
@@ -105,7 +105,7 @@ FirFilter::~FirFilter(void)
     None.
 
 *****************************************************************************/
-void FirFilter::resetFilterState(void)
+void LmsNoiseCanceller::resetFilterState(void)
 {
   int i;
 
@@ -141,7 +141,7 @@ void FirFilter::resetFilterState(void)
     y - The output value of the filter.
 
 *****************************************************************************/
-float FirFilter::filterData(float x)
+float LmsNoiseCanceller::filterData(float x)
 {
   float *h, y;
   int k, xIndex;
