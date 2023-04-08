@@ -23,8 +23,9 @@ class NlmsNoiseCanceller
   NlmsNoiseCanceller(int filterLength,int referenceDelay,float beta);
   ~NlmsNoiseCanceller(void);
 
-  void acceptData(int16_t *bufferPtr,uint32_t bufferLength);
-  float filterData(float x);
+  void acceptData(int16_t *bufferPtr,
+                  uint32_t bufferLength,
+                  int16_t *outputBufferPtr);
 
   private:
 
@@ -32,10 +33,13 @@ class NlmsNoiseCanceller
   // Utility functions.
   //*******************************************************************
   // Abstract the implementation of the pipeline.
-  void shiftSampleInPipeline(float x);
+  void shiftSampleIntoPipeline(float x);
 
   // This performs linear convolution.
   float dotProduct(float a[],float b[],int n);
+
+  // This performs the adaptive filtering function.
+  float filterData(float x);
 
   //*******************************************************************
   // Attributes.

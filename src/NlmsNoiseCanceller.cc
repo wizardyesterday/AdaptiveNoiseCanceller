@@ -105,14 +105,57 @@ NlmsNoiseCanceller::~NlmsNoiseCanceller(void)
 
 /*****************************************************************************
 
-  Name: shiftSampleInPipeline
+  Name: acceptData
 
   Purpose: The purpose of this function is to shift the next sample into
   the filter state memory (the pipeline).  For now, a linear buffer will
   be used.  This was chosen because the pipeline is used in the update
   equation for the the filter coefficients.
 
-  Calling Sequence: shiftSampleInPipeline(x)
+  Calling Sequence: acceptData(bufferPtr,bufferLength,outputBufferPtr)
+
+  Inputs:
+
+    bufferPtr - A pointer to storage that provides the input samples.
+
+    bufferLength - The nmber of samples referenced by bufferPtr.  This
+    will also be the number of samples stored into memory referenced
+    by outputBufferPtr.
+
+    outputBufferPtr - A pointer to storage for the processed samples.
+
+  Outputs:
+
+    None.
+
+*****************************************************************************/
+void NlmsNoiseCanceller::acceptData(int16_t *bufferPtr,
+                                    uint32_t bufferLength,
+                                    int16_t *outputBufferPtr)
+{
+  int i;
+
+  // Filter the block of data provided by the caller.
+  for (i = 1; i < bufferLength; i++)
+  {
+    outputBufferPtr[i] = (int16_t)filterData((float)bufferPtr[i]);
+  } // for
+
+  return;
+
+} // acceptData
+
+
+/*****************************************************************************
+
+  Name: shiftSampleIntoPipeline
+
+  Purpose: The purpose of this function is to shift the next sample into
+  the filter state memory (the pipeline).  For now, a linear buffer will
+  be used.  This was chosen because the pipeline is used in the update
+  equation for the the filter coefficients.
+
+  Calling Sequence: shiftSampleIntoPipeline(x)
 
   Inputs:
 
@@ -123,7 +166,7 @@ NlmsNoiseCanceller::~NlmsNoiseCanceller(void)
     None.
 
 *****************************************************************************/
-void NlmsNoiseCanceller::shiftSampleInPipeline(float x)
+void NlmsNoiseCanceller::shiftSampleIntoPipeline(float x)
 {
   int i;
 
@@ -139,7 +182,7 @@ void NlmsNoiseCanceller::shiftSampleInPipeline(float x)
 
   return;
 
-} // shiftSampleInPipeline
+} // shiftSampleIntoPipeline
 
 /*****************************************************************************
 
@@ -183,8 +226,12 @@ float NlmsNoiseCanceller::dotProduct(float a[],float b[],int n)
   Name: filterData
 
   Purpose: The purpose of this function is to filter one sample of data
-  for the purpose of removing noise from a signal.
-
+  for the purpose of removing noise from a signal.  Here's how it works.
+  A reference signal is formed by delaying the input signal by a specified
+  number of samples.  The idea here is that the noise portion of the
+  delayed signal is uncorrelated with the nondelayed input signal.  This
+  way, the adaptive filter of the noise canceller will provide an
+  estimate of the desired signal as its output.
 
   Calling Sequence: dHat = filterData(x)
 
@@ -196,7 +243,6 @@ float NlmsNoiseCanceller::dotProduct(float a[],float b[],int n)
 
     dHat - The output value of the filter.  This is an estimate of a
     noise-reduced sample.
-
 
 *****************************************************************************/
 float NlmsNoiseCanceller::filterData(float x)
@@ -212,7 +258,7 @@ float NlmsNoiseCanceller::filterData(float x)
   w = coefficientStoragePtr;
 
   // Place the sample into the state memory.
-  shiftSampleInPipeline(x);
+  shiftSampleIntoPipeline(x);
 
   // Compute reference sample.
   d = delayLinePtr->filterData(x);
