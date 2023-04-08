@@ -147,6 +147,53 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
 
 } // getUserArguments
 
+/*****************************************************************************
+
+  Name: gauss
+
+  Purpose: The purpose of this function is to generate a random number
+  that is weighted by a Gaussian density function. 
+
+  Calling Sequence: value = gauss(sigma)
+
+  Inputs:
+
+    sigma - The standard deviation of the random process.
+
+  Outputs:
+
+    value - The generated random number.
+
+*****************************************************************************/
+float gauss(sigma)
+{
+  float x, b, r, value;
+
+  // Get first random variable.
+  x = (float) rand();
+
+  // Scale the random variable.
+  x = x / 32768.0;
+
+  // Get second random variable.
+  b = (float) rand();
+
+  // Scale the random variable.
+  b = b / 32768.0;
+
+  // Generate the angle.
+  b = 2.0 * b * M_PI;
+
+  // Compute the magnitude.
+  r = sqrt(2.0 * sigma * sigma * log(1.0 / (1.0 - x)));
+
+  // Compute the real part of the random variable.
+  value = r * cos(b);
+
+  return (value);
+
+} // gauss
+
 //*************************************************************************
 // Mainline code.
 //*************************************************************************
