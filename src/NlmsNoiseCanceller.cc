@@ -211,6 +211,9 @@ float NlmsNoiseCanceller::filterData(float x)
   // Reference filter coefficients.
   w = coefficientStoragePtr;
 
+  // Place the sample into the state memory.
+  shiftSampleInPipeline(x);
+
   // Compute reference sample.
   d = delayLinePtr->filterData(x);
 
