@@ -151,7 +151,10 @@ void NlmsNoiseCanceller::acceptData(int16_t *bufferPtr,
   Purpose: The purpose of this function is to shift the next sample into
   the filter state memory (the pipeline).  For now, a linear buffer will
   be used.  This was chosen because the pipeline is used in the update
-  equation for the the filter coefficients.
+  equation for the the filter coefficients.  The structure of the
+  pipeline is,
+
+  {x(n) x(n-1) x(n-2)...}.
 
   Calling Sequence: shiftSampleIntoPipeline(x)
 
