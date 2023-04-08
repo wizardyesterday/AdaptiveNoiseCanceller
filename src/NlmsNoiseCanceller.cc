@@ -1,22 +1,22 @@
 //************************************************************************
-// file name: LmsNoiseCanceller.cc
+// file name: NlmsNoiseCanceller.cc
 //************************************************************************
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "LmsNoiseCanceller.h"
+#include "NlmsNoiseCanceller.h"
 
 using namespace std;
 
 /*****************************************************************************
 
-  Name: LmsNoiseCanceller
+  Name: NlmsNoiseCanceller
 
   Purpose: The purpose of this function is to serve as the constructor for
-  an instance of an LmsNoiseCanceller.
+  an instance of an NlmsNoiseCanceller.
 
-  Calling Sequence: LmsNoiseCanceller(filterLength,coefficientsPtr)
+  Calling Sequence: NlmsNoiseCanceller(filterLength,coefficientsPtr)
 
   Inputs:
 
@@ -29,10 +29,12 @@ using namespace std;
     None.
 
 *****************************************************************************/
-LmsNoiseCanceller::LmsNoiseCanceller(int filterLength,
-                     float *coefficientsPtr)
+NlmsNoiseCanceller::NlmsNoiseCanceller(int filterLength,
+                                       int referenceDelay,
+                                       float beta)
 {
   int i;
+  float *delayLineCoefficientsPtr;
 
   // Save for later use.
   this->filterLength = filterLength;
@@ -40,30 +42,45 @@ LmsNoiseCanceller::LmsNoiseCanceller(int filterLength,
   // Allocate storage for the coefficients.
   coefficientStoragePtr = new float[filterLength];
 
-  // Save the coefficients.
+  // Start with zero-valued coefficients.
   for (i = 0; i < filterLength; i++)
   {
-    coefficientStoragePtr[i] = coefficientsPtr[i];
+    coefficientStoragePtr[i] = 0;
   } // for
 
   // Allocate storage for the filter state.
   filterStatePtr = new float[filterLength];
 
-  // Set the filter state to an initial value.
-  resetFilterState();
+  // Save this for display purposes.
+  this->referenceDelay = referenceDelay;
+
+  // Allocate delay line storage
+  delayLineCoefficientsPtr = new float[referenceDelay];
+
+  // Set delay line coefficient.
+  delayLineCoefficientsPtr[referenceDelay - 1] = 1;
+
+  // Instantiate delay line.
+  delayLinePtr = new FirFilter(referenceDelay,delayLineCoefficientsPtr);
+
+  // We don't need this anymore.
+  delete[] delayLinePtr;
+
+  // We'll use this for the update equation.
+  this->beta = beta;
 
   return;
 
-} // LmsNoiseCanceller
+} // NlmsNoiseCanceller
 
 /*****************************************************************************
 
-  Name: ~LmsNoiseCanceller
+  Name: ~NlmsNoiseCanceller
 
   Purpose: The purpose of this function is to serve as the destructor for
-  an instance of an LmsNoiseCanceller.
+  an instance of an NlmsNoiseCanceller.
 
-  Calling Sequence: ~LmsNoiseCanceller()
+  Calling Sequence: ~NlmsNoiseCanceller()
 
   Inputs:
 
@@ -74,16 +91,17 @@ LmsNoiseCanceller::LmsNoiseCanceller(int filterLength,
     None.
 
 *****************************************************************************/
-LmsNoiseCanceller::~LmsNoiseCanceller(void)
+NlmsNoiseCanceller::~NlmsNoiseCanceller(void)
 {
 
   // Release resources.
   delete[] coefficientStoragePtr;
   delete[] filterStatePtr;
+  delete delayLinePtr;
 
   return;
 
-} // ~LmsNoiseCanceller
+} // ~NlmsNoiseCanceller
 
 /*****************************************************************************
 
@@ -94,24 +112,25 @@ LmsNoiseCanceller::~LmsNoiseCanceller(void)
   be used.  This was chosen because the pipeline is used in the update
   equation for the the filter coefficients.
 
-  Calling Sequence: shiftSampleInPipeline(float x)
+  Calling Sequence: shiftSampleInPipeline(x)
 
   Inputs:
 
-    None.
+    x - The sample to shift into the pipeline.
 
   Outputs:
 
     None.
 
 *****************************************************************************/
-void LmsNoiseCanceller::shiftSampleInPipeline(float x)
+void NlmsNoiseCanceller::shiftSampleInPipeline(float x)
 {
   int i;
 
   // Shift the existing samples.
-  for (i = 2; i < filterLength; i++)
+  for (i = 1; i < filterLength; i++)
   {
+    // Make room for the new sample.
     filterStatePtr[i] = filterStatePtr[i-1];
   } // for
 
@@ -124,13 +143,50 @@ void LmsNoiseCanceller::shiftSampleInPipeline(float x)
 
 /*****************************************************************************
 
+  Name: dotProduct
+
+  Purpose: The purpose of this function is to compute the dot product
+  between two vectors
+
+  Calling Sequence: dotProduct(a,b,n)
+
+  Inputs:
+
+    a - The first vector for which a dot product is to be computed.
+
+    b - The second vector for which a dot product is to be computed.
+
+  Outputs:
+
+    c - The dot product of vectors, a and b.
+
+*****************************************************************************/
+float NlmsNoiseCanceller::dotProduct(float a[],float b[],int n)
+{
+  float result;
+  int i;
+
+  // Start out with a zero sum.
+  result = 0;
+
+  for (i = 0; i < n; i++)
+  {
+    result = result + (a[i] * b[i]);
+  } // for
+
+  return (result);
+
+} // dotProduct
+
+/*****************************************************************************
+
   Name: filterData
 
-  Purpose: The purpose of this function is to filter one sample of data.
-  It uses a circular buffer to avoid the copying of data when the filter
-  state memory is updated.
+  Purpose: The purpose of this function is to filter one sample of data
+  for the purpose of removing noise from a signal.
 
-  Calling Sequence: y = filterData(x)
+
+  Calling Sequence: dHat = filterData(x)
 
   Inputs:
 
@@ -138,49 +194,42 @@ void LmsNoiseCanceller::shiftSampleInPipeline(float x)
 
   Outputs:
 
-    y - The output value of the filter.
+    dHat - The output value of the filter.  This is an estimate of a
+    noise-reduced sample.
+
 
 *****************************************************************************/
-float LmsNoiseCanceller::filterData(float x)
+float NlmsNoiseCanceller::filterData(float x)
 {
-  float *h, y;
-  int k, xIndex;
+  int i;
+  float dHat;
+  float *w;
+  float d;
+  float den;
+  float e;
 
-  // Reference the first filter coefficient.
-  h = coefficientStoragePtr;
+  // Reference filter coefficients.
+  w = coefficientStoragePtr;
 
-  // Store sample value.
-  filterStatePtr[ringBufferIndex] = x;
+  // Compute reference sample.
+  d = delayLinePtr->filterData(x);
 
-  // Set current position of index to deal with convolution sum.
-  xIndex = ringBufferIndex;
+  // Compute noise-reduced sample.
+  dHat = dotProduct(w,filterStatePtr,filterLength);
 
-  // Clear the accumulator.
-  y = 0;
-  
-  for (k = 0; k < filterLength; k++)
+  // Compute the error.
+  e = d - dHat;
+
+  // Compute the normalizing denominator.
+  den = dotProduct(filterStatePtr,filterStatePtr,filterLength);
+
+  // Update the filter coefficients.
+  for (i = 0; i < filterLength; i++)
   {
-    // Perform multiply-accumulate operation.
-    y = y + (h[k] * filterStatePtr[xIndex]);
-
-    // Decrement the index in a modulo fashion.
-    xIndex--;
-    if (xIndex < 0)
-    {
-      // Wrap the index.
-      xIndex = filterLength - 1;
-    } // if
+    w[i] = w[i] + ((beta/den) * e * filterStatePtr[i]);
   } // for
-
-  // Increment the index in a modulo fashion.
-  ringBufferIndex++;
-  if (ringBufferIndex == filterLength)
-  {
-    // Wrap the index.
-    ringBufferIndex = 0;
-  } // if
  
-  return (y);
+  return (dHat);
 
 } // filterData
 

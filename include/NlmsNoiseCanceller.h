@@ -35,7 +35,7 @@ class NlmsNoiseCanceller
   void shiftSampleInPipeline(float x);
 
   // This performs linear convolution.
-  float dotProduct(float a,float b,int n);
+  float dotProduct(float a[],float b[],int n);
 
   //*******************************************************************
   // Attributes.

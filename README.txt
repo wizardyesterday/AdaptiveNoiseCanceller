@@ -7,3 +7,6 @@ long way.  Soon, I will have a C++ class that implements this noise
 canceller.  For now, I want to experiment with the Scilab code to flush
 out any anomolies.
 
+04/072023
+We have compiling C++ code!
+
