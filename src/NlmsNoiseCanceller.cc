@@ -54,11 +54,11 @@ NlmsNoiseCanceller::NlmsNoiseCanceller(int filterLength,
   // Save this for display purposes.
   this->referenceDelay = referenceDelay;
 
-  // Allocate delay line storage
-  delayLineCoefficientsPtr = new float[referenceDelay];
+  // Allocate delay line storage.
+  delayLineCoefficientsPtr = new float[referenceDelay + 1];
 
   // Set delay line coefficient.
-  delayLineCoefficientsPtr[referenceDelay - 1] = 1;
+  delayLineCoefficientsPtr[referenceDelay] = 1;
 
   // Instantiate delay line.
   delayLinePtr = new FirFilter(referenceDelay,delayLineCoefficientsPtr);
@@ -107,10 +107,8 @@ NlmsNoiseCanceller::~NlmsNoiseCanceller(void)
 
   Name: acceptData
 
-  Purpose: The purpose of this function is to shift the next sample into
-  the filter state memory (the pipeline).  For now, a linear buffer will
-  be used.  This was chosen because the pipeline is used in the update
-  equation for the the filter coefficients.
+  Purpose: The purpose of this function is to present input samples to
+  be filtered and produce output samples to the calling function.
 
   Calling Sequence: acceptData(bufferPtr,bufferLength,outputBufferPtr)
 
@@ -136,7 +134,7 @@ void NlmsNoiseCanceller::acceptData(int16_t *bufferPtr,
   int i;
 
   // Filter the block of data provided by the caller.
-  for (i = 1; i < bufferLength; i++)
+  for (i = 0; i < bufferLength; i++)
   {
     outputBufferPtr[i] = (int16_t)filterData((float)bufferPtr[i]);
   } // for
@@ -191,20 +189,22 @@ void NlmsNoiseCanceller::shiftSampleIntoPipeline(float x)
   Purpose: The purpose of this function is to compute the dot product
   between two vectors
 
-  Calling Sequence: dotProduct(a,b,n)
+  Calling Sequence: dotProduct(aPtr,bPtr,n)
 
   Inputs:
 
-    a - The first vector for which a dot product is to be computed.
+    a - A pointer to the first vector for which a dot product is to be
+    computed.
 
-    b - The second vector for which a dot product is to be computed.
+    b - A pointer to he second vector for which a dot product is to be
+    computed.
 
   Outputs:
 
-    c - The dot product of vectors, a and b.
+    c - The dot product of the two input vectors.
 
 *****************************************************************************/
-float NlmsNoiseCanceller::dotProduct(float a[],float b[],int n)
+float NlmsNoiseCanceller::dotProduct(float *aPtr,float *bPtr,int n)
 {
   float result;
   int i;
@@ -214,7 +214,7 @@ float NlmsNoiseCanceller::dotProduct(float a[],float b[],int n)
 
   for (i = 0; i < n; i++)
   {
-    result = result + (a[i] * b[i]);
+    result = result + (aPtr[i] * bPtr[i]);
   } // for
 
   return (result);
@@ -275,7 +275,7 @@ float NlmsNoiseCanceller::filterData(float x)
   // Update the filter coefficients.
   for (i = 0; i < filterLength; i++)
   {
-    w[i] = w[i] + ((beta/den) * e * filterStatePtr[i]);
+    w[i] = w[i] + ((beta / den) * e * filterStatePtr[i]);
   } // for
  
   return (dHat);
