@@ -27,6 +27,10 @@ class NlmsNoiseCanceller
                   uint32_t bufferLength,
                   int16_t *outputBufferPtr);
 
+  void acceptData(float *bufferPtr,
+                  uint32_t bufferLength,
+                  float *outputBufferPtr);
+
   private:
 
   //*******************************************************************

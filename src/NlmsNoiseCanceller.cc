@@ -143,6 +143,45 @@ void NlmsNoiseCanceller::acceptData(int16_t *bufferPtr,
 
 } // acceptData
 
+/*****************************************************************************
+
+  Name: acceptData
+
+  Purpose: The purpose of this function is to present input samples to
+  be filtered and produce output samples to the calling function.
+
+  Calling Sequence: acceptData(bufferPtr,bufferLength,outputBufferPtr)
+
+  Inputs:
+
+    bufferPtr - A pointer to storage that provides the input samples.
+
+    bufferLength - The nmber of samples referenced by bufferPtr.  This
+    will also be the number of samples stored into memory referenced
+    by outputBufferPtr.
+
+    outputBufferPtr - A pointer to storage for the processed samples.
+
+  Outputs:
+
+    None.
+
+*****************************************************************************/
+void NlmsNoiseCanceller::acceptData(float *bufferPtr,
+                                    uint32_t bufferLength,
+                                    float *outputBufferPtr)
+{
+  int i;
+
+  // Filter the block of data provided by the caller.
+  for (i = 0; i < bufferLength; i++)
+  {
+    outputBufferPtr[i] = filterData(bufferPtr[i]);
+  } // for
+
+  return;
+
+} // acceptData
 
 /*****************************************************************************
 
