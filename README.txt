@@ -14,6 +14,14 @@ generate the reference signal, and the convergence factor.  I have found
 that, depending upon the nature of the noise, experimentation needs to be
 performed to achieve an optimum delay for the reference signal.
 
-To build the test programs, type 'sh buildSystem.sh'.  The two test
-programs will be in the top level directory of the repository.
+3. systemTest: This program performs the function of the previous two
+programs, except that all data is generated internally by the program,
+and output files are written.
+
+4. test.sci: This program lets me plot the output of the systemTest program.
+
+To build the test programs, type 'sh buildSystem.sh'.  The four test
+programs will be in the test directory of the repository.  Note that the
+program, test.sci, is not built by the build script. That code was created
+by me using an editor.
 

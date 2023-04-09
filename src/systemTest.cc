@@ -246,7 +246,9 @@ int main(int argc,char **argv)
   FILE *fd1;
   FILE *fd2;
   FILE *fd3;
+  FILE *fd4;
   bool exitProgram;
+  float noise;
   float iValue, qValue;
   float processedSample;
   float amplitude;
@@ -258,7 +260,6 @@ int main(int argc,char **argv)
   int delay;
   float beta;
   int numberOfSamples;
-  float noise;
   Nco *myNcoPtr;
   NlmsNoiseCanceller *cancellerPtr;
   struct MyParameters parameters;
@@ -292,8 +293,9 @@ int main(int argc,char **argv)
   cancellerPtr = new NlmsNoiseCanceller(filterOrder,delay,beta);
 
   fd1 = fopen("original.dat","w");
-  fd2 = fopen("noisy.dat","w");
-  fd3 = fopen("processed.dat","w");
+  fd2 = fopen("noise.dat","w");
+  fd3 = fopen("tainted.dat","w");
+  fd4 = fopen("processed.dat","w");
 
   for (i = 0; i < numberOfSamples; i++)
   {
@@ -306,23 +308,27 @@ int main(int argc,char **argv)
     // Write the untainted sample to the file..
     fwrite(&iValue,sizeof(float),1,fd1);
 
+    // Write the noise sample to the file..
+    fwrite(&noise,sizeof(float),1,fd2);
+
     // Add noise to sine wave.
     iValue = iValue + noise;
 
     // Write the noisy sample to the file..
-    fwrite(&iValue,sizeof(float),1,fd2);
+    fwrite(&iValue,sizeof(float),1,fd3);
 
     // Remove the noise from the sample.
    cancellerPtr->acceptData(&iValue,1,&processedSample);
 
-    // Write the noisy sample to the file..
-    fwrite(&processedSample,sizeof(float),1,fd3);
+    // Write the processed sample to the file..
+    fwrite(&processedSample,sizeof(float),1,fd4);
   } // for
 
   // We're done with these files.
   fclose(fd1);
   fclose(fd2);
   fclose(fd3);
+  fclose(fd4);
 
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/
   // Release resources.
@@ -337,7 +343,6 @@ int main(int argc,char **argv)
     delete cancellerPtr;
   } // if
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-
 
   return (0);
 
