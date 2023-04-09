@@ -1,0 +1,6 @@
+The image in this directory portrays different methods of realizing noise
+cancellers.  The one that I implemented is described by the third block
+diagram at the bottom of the image.  This image was captured from the
+textbook, "Statistical Digital Signal Processing and Modeling" by Monson
+Hayes.
+
