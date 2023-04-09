@@ -25,3 +25,8 @@ programs will be in the test directory of the repository.  Note that the
 program, test.sci, is not built by the build script. That code was created
 by me using an editor.
 
+The test directory also contains a file, speechWithNoise.raw, that has a
+voice recording with static (from my SDR) in the background.  The format
+is raw PCM with a sample rate of 8000S/s, and a data format of signed 16-bit
+little endian samples.
+
