@@ -1,5 +1,5 @@
 //*************************************************************************
-// File name: testSystem.cc
+// File name: noisyCosine.cc
 //*************************************************************************
 
 //*************************************************************************
@@ -10,8 +10,8 @@
 //
 // To run this program type,
 // 
-//     ./cosine > -a amplitude -f frequency -r sampleRate
-//                -d duration > ncoFileName,
+//     ./noisyCosine > -a amplitude -f frequency -r sampleRate
+//                     -d duration -v noiseVariance > ncoFileName,
 //
 // where,
 //
@@ -36,6 +36,7 @@ struct MyParameters
   float *frequencyPtr;
   float *sampleRatePtr;
   float *durationPtr;
+  float *noiseVariancePtr;
 };
 
 /*****************************************************************************
@@ -82,6 +83,9 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
 
   // Default for a 1 second signal.
   *parameters.durationPtr = 1;
+
+  // Default to a noise variance of 0.1;
+  *parameters.noiseVariancePtr = 0.1;
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
   // Set up for loop entry.
@@ -93,7 +97,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
   while (!done)
   {
     // Retrieve the next option.
-    opt = getopt(argc,argv,"a:f:r:d:h");
+    opt = getopt(argc,argv,"a:f:r:d:v:h");
 
     switch (opt)
     {
@@ -122,11 +126,17 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
         break;
       } // case
 
+      case 'v':
+      {
+        *parameters.noiseVariancePtr = atof(optarg);
+        break;
+      } // case
+
       case 'h':
       {
         // Display usage.
         fprintf(stderr,"./cosine -a amplitude -f frequency -r sampleRate"
-                " -d duration\n");
+                " -d duration -v noiseVariance\n");
 
         // Indicate that program must be exited.
         exitProgram = true;
@@ -165,21 +175,21 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
     value - The generated random number.
 
 *****************************************************************************/
-float gauss(sigma)
+float gauss(float sigma)
 {
   float x, b, r, value;
 
   // Get first random variable.
-  x = (float) rand();
+  x = (float)rand();
 
   // Scale the random variable.
-  x = x / 32768.0;
+  x = x / RAND_MAX;
 
   // Get second random variable.
-  b = (float) rand();
+  b = (float)rand();
 
   // Scale the random variable.
-  b = b / 32768.0;
+  b = b / RAND_MAX;
 
   // Generate the angle.
   b = 2.0 * b * M_PI;
@@ -207,7 +217,9 @@ int main(int argc,char **argv)
   float frequency;
   float sampleRate;
   float duration;
+  float noiseVariance;
   int numberOfSamples;
+  float noise;
   Nco *myNcoPtr;
   struct MyParameters parameters;
 
@@ -216,6 +228,7 @@ int main(int argc,char **argv)
   parameters.frequencyPtr = &frequency;
   parameters.sampleRatePtr = &sampleRate;
   parameters.durationPtr = &duration;
+  parameters.noiseVariancePtr = &noiseVariance;
 
   // Retrieve the system parameters.
   exitProgram = getUserArguments(argc,argv,parameters);
@@ -236,6 +249,12 @@ int main(int argc,char **argv)
   {
     // Get the next sample pair.
     myNcoPtr->run(&iValue,&qValue);
+
+    // Get noise sample.
+    noise = gauss(noiseVariance);
+
+    // Add noise to sine wave.
+    iValue = iValue + noise;
 
     // Convert to integer and scale.
     cosineValue = (int16_t)(iValue * amplitude * 32767);
