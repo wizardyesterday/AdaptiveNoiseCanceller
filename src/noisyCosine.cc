@@ -6,12 +6,13 @@
 // This program tests both the numerically controlled oscillator (NCO).
 // The NCO data is written to an output file with the format described
 // below.  Note that only the in-phase component of the NCO output is
-// used, therefore the output file represents a cosine waveform.
+// used, therefore the output file represents a cosine waveform.  The
+// output waveform can contain a user-specified amount of noise.
 //
 // To run this program type,
 // 
-//     ./noisyCosine > -a amplitude -f frequency -r sampleRate
-//                     -d duration -v noiseVariance > ncoFileName,
+//     ./noisyCosine -a amplitude -f frequency -r sampleRate
+//                     -d duration -v noiseVariance > outputFileName,
 //
 // where,
 //
@@ -19,6 +20,7 @@
 //    frequency - frequency in Hz.
 //    sampleRate - The sample rate in samples/second.
 //    duration - The duration in seconds.
+//    noiseVariance - The variance of the noise source.
 ///*************************************************************************
 
 #include <stdio.h>
@@ -135,7 +137,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
       case 'h':
       {
         // Display usage.
-        fprintf(stderr,"./cosine -a amplitude -f frequency -r sampleRate"
+        fprintf(stderr,"./noisyCosine -a amplitude -f frequency -r sampleRate"
                 " -d duration -v noiseVariance\n");
 
         // Indicate that program must be exited.
@@ -259,8 +261,8 @@ int main(int argc,char **argv)
     // Convert to integer and scale.
     cosineValue = (int16_t)(iValue * amplitude * 32767);
 
-   // Write the samples to stdout
-   fwrite(&cosineValue,sizeof(int16_t),1,stdout);
+    // Write the samples to stdout
+    fwrite(&cosineValue,sizeof(int16_t),1,stdout);
   } // for
 
   // Release resources.

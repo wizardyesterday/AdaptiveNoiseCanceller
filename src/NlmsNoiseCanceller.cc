@@ -61,10 +61,10 @@ NlmsNoiseCanceller::NlmsNoiseCanceller(int filterLength,
   delayLineCoefficientsPtr[referenceDelay] = 1;
 
   // Instantiate delay line.
-  delayLinePtr = new FirFilter(referenceDelay,delayLineCoefficientsPtr);
+  delayLinePtr = new FirFilter(referenceDelay+1,delayLineCoefficientsPtr);
 
-  // We don't need this anymore.
-  delete[] delayLinePtr;
+  // We're done with this.
+  delete[] delayLineCoefficientsPtr;
 
   // We'll use this for the update equation.
   this->beta = beta;
