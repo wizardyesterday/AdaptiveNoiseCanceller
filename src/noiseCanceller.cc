@@ -8,7 +8,7 @@
 //
 // To run this program type,
 // 
-//     ./noiseCanceller -f filterOrder -d delay -b beta < inputFileName
+//     ./noiseCanceller -o filterOrder -d delay -b beta < inputFileName
 //                      > outputFileName,
 //
 // where,
@@ -88,11 +88,11 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
   while (!done)
   {
     // Retrieve the next option.
-    opt = getopt(argc,argv,"f:d:b:h");
+    opt = getopt(argc,argv,"o:d:b:h");
 
     switch (opt)
     {
-      case 'f':
+      case 'o':
       {
         *parameters.filterOrderPtr = atoi(optarg);
         break;
@@ -113,7 +113,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
       case 'h':
       {
         // Display usage.
-        fprintf(stderr,"./noiseCanceller -f filterOrder -d delay -b beta\n");
+        fprintf(stderr,"./noiseCanceller -o filterOrder -d delay -b beta\n");
 
         // Indicate that program must be exited.
         exitProgram = true;

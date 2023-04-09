@@ -9,3 +9,5 @@ g++ -I include -g -O0 -o noisyCosine src/noisyCosine.cc src/Nco.cc src/PhaseAccu
 
 g++ -I include -g -O0 -o noiseCanceller src/noiseCanceller.cc src/FirFilter.cc src/NlmsNoiseCanceller.cc
 
+g++ -I include -g -O0 -o systemTest src/systemTest.cc src/Nco.cc src/PhaseAccumulator.cc src/FirFilter.cc src/NlmsNoiseCanceller.cc
+
