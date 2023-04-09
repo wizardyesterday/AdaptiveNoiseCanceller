@@ -274,6 +274,7 @@ float NlmsNoiseCanceller::filterData(float x)
 
   // Compute the normalizing denominator.
   den = dotProduct(filterStatePtr,filterStatePtr,filterLength);
+  den += 0.0001;
 
   // Update the filter coefficients.
   for (i = 0; i < filterLength; i++)

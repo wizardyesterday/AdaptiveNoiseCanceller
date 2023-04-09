@@ -88,7 +88,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
   while (!done)
   {
     // Retrieve the next option.
-    opt = getopt(argc,argv,"f:d:h");
+    opt = getopt(argc,argv,"f:d:b:h");
 
     switch (opt)
     {
