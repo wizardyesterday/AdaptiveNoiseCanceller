@@ -211,7 +211,7 @@ void NlmsNoiseCanceller::shiftSampleIntoPipeline(float x)
   int i;
 
   // Shift the existing samples.
-  for (i = 1; i < filterLength; i++)
+  for (i = filterLength-1; i > 0; i--)
   {
     // Make room for the new sample.
     filterStatePtr[i] = filterStatePtr[i-1];
