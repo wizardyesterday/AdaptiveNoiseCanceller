@@ -1,6 +1,6 @@
 This repository contains code for an NLMS (normalized least mean square)
 adaptive noise canceller.
-There are two programs that provide testing of the noise canceller.
+There are three programs that provide testing of the noise canceller.
 
 1. noisyCosine: This program lets the user generate a cosine wave of a
 specified frequency, amplitude, duration, sample rate, and variance of a
