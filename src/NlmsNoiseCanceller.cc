@@ -193,7 +193,7 @@ void NlmsNoiseCanceller::acceptData(float *bufferPtr,
   equation for the the filter coefficients.  The structure of the
   pipeline is,
 
-  {x(n) x(n-1) x(n-2)...}.
+  {x(n) x(n-1) x(n-2)...,x(n - N + 1)}.
 
   Calling Sequence: shiftSampleIntoPipeline(x)
 
