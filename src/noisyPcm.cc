@@ -38,6 +38,11 @@ struct MyParameters
   float *betaPtr;
 };
 
+// Globals.
+int16_t inputBuffer[32768];
+int16_t outputBuffer[32768];
+float floatBuffer[32768];
+
 /*****************************************************************************
 
   Name: getUserArguments
@@ -76,6 +81,15 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
 
   // Default to a noise variance of 0.1;
   *parameters.noiseVariancePtr = 0.1;
+
+  // Default to a LMS filter length 0f 5.
+  *parameters.filterLengthPtr = 5;
+
+  // Default to a LMS delay of 5.
+  *parameters.delayPtr = 5;
+
+  // Default to a LMS delay convergence factor of 0.1
+  *parameters.betaPtr = 0.1;
   //_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
 
   // Set up for loop entry.
@@ -87,7 +101,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
   while (!done)
   {
     // Retrieve the next option.
-    opt = getopt(argc,argv,"t:v:h");
+    opt = getopt(argc,argv,"t:v:l:d:vh");
 
     switch (opt)
     {
@@ -125,7 +139,7 @@ bool getUserArguments(int argc,char **argv,struct MyParameters parameters)
       {
         // Display usage.
         fprintf(stderr,"./noisyPcm -t fileType [0, noisy | 1, noise-reduced"
-                " -v noiseVariance -l filterLength -d delay -b beta\n");
+                " -v noiseVariance\n -l filterLength -d delay -b beta\n");
 
         // Indicate that program must be exited.
         exitProgram = true;
@@ -202,10 +216,13 @@ int main(int argc,char **argv)
   bool exitProgram;
   int fileType;
   float noiseVariance;
-  float noise;
   int filterLength;
   int delay;
   float beta;
+  float noise;
+  float sigma;
+  uint32_t count;
+  bool done;
   NlmsNoiseCanceller *myCancellerPtr;
   struct MyParameters parameters;
 
@@ -225,25 +242,66 @@ int main(int argc,char **argv)
     return (0);
   } // if
 
+  // Convert to standard deviation.
+  sigma = sqrt(noiseVariance);
+
   // Instantiate an adaptive noise canceller
   myCancellerPtr = new NlmsNoiseCanceller(filterLength,delay,beta);
 
-#if 0
-  for (i = 0; i < numberOfSamples; i++)
+  // Set up for loop entry.
+  done = false;
+
+  while (!done)
   {
-    // Get the next sample pair.
-    myNcoPtr->run(&iValue,&qValue);
+    // Read a block of PCM samples.
+    count = fread(inputBuffer,sizeof(int16_t),1024,stdin);
 
-    // Get noise sample.
-    noise = gauss(noiseVariance);
+    if (count == 0)
+    {
+      // We're done.
+      done = true;
+    } // if
+    else
+    {
+      for (i = 0; i < count; i++)
+      {
+        // Scaled to a maximum magnitude of unity.
+        floatBuffer[i] = (float)inputBuffer[i] / 32768;
 
-    // Add noise to sine wave.
-    iValue = iValue + noise;
+        // Generate a noise sample.
+        noise = gauss(sigma);
 
-    // Write the samples to stdout
-    fwrite(&cosineValue,sizeof(int16_t),1,stdout);
-  } // for
-#endif
+        // Add noise.
+        floatBuffer[i] += noise;
+
+        // Convert to PCM ample.
+        floatBuffer[i] *= 32000;
+
+      } // for
+
+      switch (fileType)
+      {
+        case 0:
+        {
+          // The noisy PCM data will be used.
+        } // case
+
+        case 1:
+        {
+          // The noise-reduced data wil be used.
+          myCancellerPtr->acceptData(floatBuffer,count,floatBuffer);
+        } // case
+      } // switch
+
+      for (i = 0; i < count; i++)
+      {
+        // Convert to PCM samples.
+        outputBuffer[i] = (int16_t)(floatBuffer[i] * 32768);
+      } // for
+    } // else
+
+    fwrite(outputBuffer,sizeof(int16_t),count,stdout);
+  } // while
 
   // Release resources.
   if (myCancellerPtr != NULL)
