@@ -188,6 +188,13 @@ float gauss(float sigma)
   // Scale the random variable.
   x = x / RAND_MAX;
 
+  if (x >= 1)
+  {
+    // Reduce it.
+    x = x - (1 - x); 
+  } // if
+
+
   // Get second random variable.
   b = (float)rand();
 
@@ -266,10 +273,12 @@ int main(int argc,char **argv)
       for (i = 0; i < count; i++)
       {
         // Scaled to a maximum magnitude of unity.
-        floatBuffer[i] = (float)inputBuffer[i] / 32768;
+        floatBuffer[i] = (float)inputBuffer[i];
+        floatBuffer[i] /= 32768;
 
         // Generate a noise sample.
         noise = gauss(sigma);
+//        noise /= 2;
 
         // Add noise.
         floatBuffer[i] += noise;
@@ -284,19 +293,21 @@ int main(int argc,char **argv)
         case 0:
         {
           // The noisy PCM data will be used.
+          break;
         } // case
 
         case 1:
         {
           // The noise-reduced data wil be used.
           myCancellerPtr->acceptData(floatBuffer,count,floatBuffer);
+          break;
         } // case
       } // switch
 
       for (i = 0; i < count; i++)
       {
         // Convert to PCM samples.
-        outputBuffer[i] = (int16_t)(floatBuffer[i] * 32768);
+        outputBuffer[i] = (int16_t)floatBuffer[i];
       } // for
     } // else
 
