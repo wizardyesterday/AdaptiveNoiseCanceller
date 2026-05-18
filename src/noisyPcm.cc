@@ -1,5 +1,5 @@
 //*************************************************************************
-// File name: noisyCosine.cc
+// File name: noisyPcm.cc
 //*************************************************************************
 
 //*************************************************************************
@@ -12,12 +12,22 @@
 //
 // To run this program type,
 // 
-//     ./noisyCosine -t filetype -v noiseVariance > outputFileName,
+//     ./noisyPcm -t filetype -v noiseVariance -l filterLength
+//      -d delay -b beta < inputFileName > outputFileName,
 //
 // where,
 //
-//    diletype - Either noisy or noise-reduced.
+//    filetype - Either noisy or noise-reduced.
+//
 //    noiseVariance - The variance of the noise source.
+//
+//    filterLength  The number of taps for the nonrecursive filter in
+//    the adaptive noise canceller.
+//
+//    delay - The number of unit delays used by the adaptive noise
+//    canceller.
+//
+//    beta - The convergence factor used by the adaptive noise canceller.
 ///*************************************************************************
 
 #include <stdio.h>
@@ -278,7 +288,7 @@ int main(int argc,char **argv)
 
         // Generate a noise sample.
         noise = gauss(sigma);
-//        noise /= 2;
+        noise /= 2;
 
         // Add noise.
         floatBuffer[i] += noise;
